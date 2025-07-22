@@ -1,0 +1,15 @@
+.carousel {
+    display: flex;
+    overflow-x: scroll;
+    scroll-snap-type: x mandatory;
+    gap: 10px;
+    padding: 10px;
+}
+
+.carousel-image {
+    flex: 0 0 90%;
+    scroll-snap-align: start;
+    border-radius: 10px;
+    object-fit: cover;
+    max-height: 220px;
+}
