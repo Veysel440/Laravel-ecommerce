@@ -1,21 +1,28 @@
-'use client';
-
-import '../styles/CategoryBar.css';
+import { useContext } from "react";
+import { CategoryContext } from "../contexts/CategoryContext";
+import "../styles/CategoryBar.css";
 
 const categories = [
-    'Kadın',
-    'Erkek',
-    'Elektronik',
-    'Ev & Yaşam',
-    'Kozmetik',
-    'Spor',
+    "Tümü",
+    "Kadın",
+    "Erkek",
+    "Elektronik",
+    "Ev & Yaşam",
+    "Kozmetik",
+    "Spor",
 ];
 
 export default function CategoryBar() {
+    const { selectedCategory, setSelectedCategory } = useContext(CategoryContext);
+
     return (
         <div className="category-bar">
             {categories.map((cat) => (
-                <button key={cat} className="category-button">
+                <button
+                    key={cat}
+                    className={`category-button${selectedCategory === cat ? " active" : ""}`}
+                    onClick={() => setSelectedCategory(cat)}
+                >
                     {cat}
                 </button>
             ))}

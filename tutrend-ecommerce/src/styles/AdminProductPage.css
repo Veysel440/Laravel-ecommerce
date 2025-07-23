@@ -1,0 +1,67 @@
+.admin-product-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.admin-product-create-btn {
+    padding: 8px 18px;
+    background: #ff6600;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.admin-product-create-btn:hover {
+    background: #e65c00;
+}
+
+.admin-product-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.admin-product-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    width: 250px;
+    background: #fafafa;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.admin-product-btns {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.admin-product-edit-btn {
+    padding: 6px 12px;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.admin-product-edit-btn:hover {
+    background: #0056b3;
+}
+
+.admin-product-delete-btn {
+    padding: 6px 12px;
+    background: #e63946;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.admin-product-delete-btn:hover {
+    background: #a82834;
+}

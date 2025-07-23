@@ -1,23 +1,40 @@
-import '../styles/globals.css';
-import Navbar from '../components/Navbar';
-import { SearchProvider } from '../contexts/SearchContext';
-import { CartProvider } from '../contexts/CartContext';
-import { AuthProvider } from '../contexts/AuthContext';
+"use client";
+import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
+import { AuthProvider } from "../contexts/AuthContext";
+import { CartProvider } from "../contexts/CartContext";
+import { SearchProvider } from "../contexts/SearchContext";
+import { FavoriteProvider } from "../contexts/FavoriteContext";
+import { CategoryProvider } from "../contexts/CategoryContext";
 
-export const metadata = { title: 'TrendyEcom' };
+
+const theme = createTheme({
+    palette: {
+        primary: { main: "#ff6600" },
+        secondary: { main: "#007bff" },
+        background: { default: "#f9f9f9" },
+    },
+    shape: { borderRadius: 8 },
+    typography: { fontFamily: "Roboto, Arial, sans-serif" },
+});
 
 export default function RootLayout({ children }) {
     return (
         <html lang="tr">
         <body>
-        <AuthProvider>
-            <SearchProvider>
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <AuthProvider>
                 <CartProvider>
-                    <Navbar />
-                    <main className="container">{children}</main>
+                    <SearchProvider>
+                        <FavoriteProvider>
+                            <CategoryProvider>
+                                {children}
+                            </CategoryProvider>
+                        </FavoriteProvider>
+                    </SearchProvider>
                 </CartProvider>
-            </SearchProvider>
-        </AuthProvider>
+            </AuthProvider>
+        </ThemeProvider>
         </body>
         </html>
     );
