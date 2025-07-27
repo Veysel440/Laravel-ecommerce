@@ -7,6 +7,7 @@ import ProductCard from "../components/ProductCard";
 import Pagination from "../components/Pagination";
 import SimpleCarousel from "../components/SimpleCarousel";
 import CategoryBar from "../components/CategoryBar";
+import FilterPanel from "../components/FilterPanel";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
@@ -14,6 +15,14 @@ export default function HomePage() {
     const [products, setProducts] = useState([]);
     const { searchText } = useContext(SearchContext);
     const { selectedCategory } = useContext(CategoryContext);
+
+
+    const [filtered, setFiltered] = useState([]);
+    const [filterState, setFilterState] = useState({
+        price: [0, 10000],
+        brand: "Tümü",
+        sort: "az"
+    });
 
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -24,13 +33,50 @@ export default function HomePage() {
     }, []);
 
 
-    const filteredProducts = products.filter((p) =>
-        (selectedCategory === "Tümü" || p.category === selectedCategory) &&
-        p.name.toLowerCase().includes(searchText.toLowerCase())
-    );
+    const applyFilters = ({ price, brand, sort }) => {
+        let f = [...products];
 
-    
-    const paginatedProducts = filteredProducts.slice(
+
+        f = f.filter((p) =>
+            (selectedCategory === "Tümü" || p.category === selectedCategory)
+        );
+
+
+        f = f.filter(
+            (p) => p.price >= price[0] && p.price <= price[1]
+        );
+
+
+        if (brand !== "Tümü") {
+            f = f.filter((p) => p.brand === brand);
+        }
+
+
+        f = f.filter((p) =>
+            p.name.toLowerCase().includes(searchText.toLowerCase())
+        );
+
+
+        if (sort === "az") f.sort((a, b) => a.name.localeCompare(b.name));
+        if (sort === "za") f.sort((a, b) => b.name.localeCompare(a.name));
+        if (sort === "price-asc") f.sort((a, b) => a.price - b.price);
+        if (sort === "price-desc") f.sort((a, b) => b.price - a.price);
+
+        setFiltered(f);
+        setCurrentPage(1);
+    };
+
+
+    const handleFilterChange = (state) => {
+        setFilterState(state);
+        applyFilters(state);
+    };
+
+    useEffect(() => {
+        applyFilters(filterState);
+    }, [products, searchText, selectedCategory]);
+
+    const paginatedProducts = filtered.slice(
         (currentPage - 1) * productsPerPage,
         currentPage * productsPerPage
     );
@@ -41,12 +87,18 @@ export default function HomePage() {
         <>
             <SimpleCarousel />
             <CategoryBar />
+            <FilterPanel
+                minPrice={0}
+                maxPrice={10000}
+                onFilterChange={handleFilterChange}
+                brandList={["Tümü", ...new Set(products.map(p => p.brand).filter(Boolean))]}
+            />
             <Typography variant="h4" align="center" sx={{ my: 3 }}>
                 Ürünler
             </Typography>
             <Pagination
                 currentPage={currentPage}
-                totalPages={Math.ceil(filteredProducts.length / productsPerPage)}
+                totalPages={Math.ceil(filtered.length / productsPerPage)}
                 onPageChange={setCurrentPage}
             />
             <Box
@@ -63,7 +115,7 @@ export default function HomePage() {
             </Box>
             <Pagination
                 currentPage={currentPage}
-                totalPages={Math.ceil(filteredProducts.length / productsPerPage)}
+                totalPages={Math.ceil(filtered.length / productsPerPage)}
                 onPageChange={setCurrentPage}
             />
         </>
