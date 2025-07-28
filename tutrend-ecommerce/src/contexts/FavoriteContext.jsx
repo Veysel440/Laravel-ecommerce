@@ -1,5 +1,6 @@
-"use client";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useState, useEffect } from "react";
+import { fetchFavorites, addFavorite, removeFavorite } from "../lib/favoriteApi";
+import { toast } from "react-toastify";
 
 export const FavoriteContext = createContext();
 
@@ -8,31 +9,41 @@ export function FavoriteProvider({ children }) {
 
 
     useEffect(() => {
-        const fav = localStorage.getItem("favorites");
-        if (fav) setFavorites(JSON.parse(fav));
+        fetchFavorites()
+            .then(setFavorites)
+            .catch(() => toast.error("Favoriler yüklenemedi"));
     }, []);
 
-    useEffect(() => {
-        localStorage.setItem("favorites", JSON.stringify(favorites));
-    }, [favorites]);
-
-    const addFavorite = (product) => {
-        if (!favorites.some((p) => p.id === product.id)) {
-            setFavorites([...favorites, product]);
+    const handleAddFavorite = async (product) => {
+        try {
+            await addFavorite(product.id);
+            setFavorites((prev) => [...prev, product]);
+            toast.success("Favorilere eklendi!");
+        } catch {
+            toast.error("Favori eklenemedi");
         }
     };
 
-    const removeFavorite = (id) => {
-        setFavorites(favorites.filter((p) => p.id !== id));
+    const handleRemoveFavorite = async (productId) => {
+        try {
+            await removeFavorite(productId);
+            setFavorites((prev) => prev.filter((p) => p.id !== productId));
+            toast.success("Favoriden çıkarıldı!");
+        } catch {
+            toast.error("Favori silinemedi");
+        }
     };
 
-    const isFavorite = (id) => favorites.some((p) => p.id === id);
-
     return (
-        <FavoriteContext.Provider value={{ favorites, addFavorite, removeFavorite, isFavorite }}>
+        <FavoriteContext.Provider
+            value={{
+                favorites,
+                addFavorite: handleAddFavorite,
+                removeFavorite: handleRemoveFavorite,
+                isFavorite: (id) => favorites.some((p) => p.id === id),
+            }}
+        >
             {children}
         </FavoriteContext.Provider>
     );
 }
-
-// Kullanmak için: const { favorites, addFavorite, removeFavorite, isFavorite } = useContext(FavoriteContext);

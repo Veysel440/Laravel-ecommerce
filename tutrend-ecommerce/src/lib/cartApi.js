@@ -1,64 +1,57 @@
 const API_BASE_URL = 'http://localhost:8000/api';
 
-const authHeader = (token) => ({
-    headers: { Authorization: `Bearer ${token}` },
-});
+export async function fetchCart() {
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/cart", {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Sepet yüklenemedi");
+    return res.json();
+}
 
-const handleResponse = async (response) => {
-    if (!response.ok) throw new Error('API hatası');
-    return await response.json();
-};
+export async function addToCart(productId, quantity = 1) {
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/cart/add", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ product_id: productId, quantity }),
+    });
+    if (!res.ok) throw new Error("Sepete eklenemedi");
+    return res.json();
+}
 
-export const fetchCart = async (token) => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/cart`, authHeader(token));
-        const data = await handleResponse(response);
-        return data.data;
-    } catch (error) {
-        console.error('fetchCart:', error);
-        throw error;
-    }
-};
+export async function updateCartItem(itemId, quantity) {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`/api/cart/update/${itemId}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ quantity }),
+    });
+    if (!res.ok) throw new Error("Güncelleme başarısız");
+    return res.json();
+}
 
-export const addToCart = async (token, productId, quantity = 1) => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/cart/add`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ product_id: productId, quantity }),
-        });
-        return await handleResponse(response);
-    } catch (error) {
-        console.error('addToCart:', error);
-        throw error;
-    }
-};
+export async function removeCartItem(itemId) {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`/api/cart/remove/${itemId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Sepetten silinemedi");
+}
 
-export const removeCartItem = async (token, cartItemId) => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/cart/remove/${cartItemId}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        return await handleResponse(response);
-    } catch (error) {
-        console.error('removeCartItem:', error);
-        throw error;
-    }
-};
+export async function clearCart() {
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/cart/clear", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Sepet temizlenemedi");
+}
 
-export const clearCart = async (token) => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/cart/clear`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        return await handleResponse(response);
-    } catch (error) {
-        console.error('clearCart:', error);
-        throw error;
-    }
-};

@@ -1,4 +1,4 @@
-// src/lib/adminApi.js
+
 const API_BASE_URL = 'http://localhost:8000/api';
 
 const authHeader = (token) => ({
@@ -13,7 +13,7 @@ const handleResponse = async (response) => {
     return await response.json();
 };
 
-// Ürünler
+
 export const fetchAdminProducts = async (token) => {
     try {
         const response = await fetch(`${API_BASE_URL}/admin/products`, authHeader(token));
@@ -25,7 +25,7 @@ export const fetchAdminProducts = async (token) => {
     }
 };
 
-// Siparişler
+
 export const fetchAdminOrders = async (token) => {
     try {
         const response = await fetch(`${API_BASE_URL}/admin/orders`, authHeader(token));
@@ -37,7 +37,7 @@ export const fetchAdminOrders = async (token) => {
     }
 };
 
-// Kullanıcılar
+
 export const fetchUsers = async (token) => {
     try {
         const response = await fetch(`${API_BASE_URL}/admin/users`, authHeader(token));
@@ -48,3 +48,11 @@ export const fetchUsers = async (token) => {
         throw error;
     }
 };
+
+export async function fetchDashboardStats() {
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/admin/dashboard", {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.json();
+}

@@ -5,6 +5,7 @@ import { CartProvider } from "../contexts/CartContext";
 import { SearchProvider } from "../contexts/SearchContext";
 import { FavoriteProvider } from "../contexts/FavoriteContext";
 import { CategoryProvider } from "../contexts/CategoryContext";
+import { OrderProvider } from "../contexts/OrderContext";
 
 
 const theme = createTheme({
@@ -27,9 +28,11 @@ export default function RootLayout({ children }) {
                 <CartProvider>
                     <SearchProvider>
                         <FavoriteProvider>
+                            <OrderProvider>
                             <CategoryProvider>
                                 {children}
                             </CategoryProvider>
+                            </OrderProvider>
                         </FavoriteProvider>
                     </SearchProvider>
                 </CartProvider>

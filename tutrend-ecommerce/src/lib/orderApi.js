@@ -9,36 +9,25 @@ const handleResponse = async (response) => {
     return await response.json();
 };
 
-export const createOrder = async (token, totalPrice, items) => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/orders`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-                total_price: totalPrice,
-                items: items.map(item => ({
-                    product_id: item.product.id,
-                    quantity: item.quantity,
-                })),
-            }),
-        });
-        return await handleResponse(response);
-    } catch (error) {
-        console.error('createOrder:', error);
-        throw error;
-    }
-};
+export async function fetchOrders() {
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/orders", {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Siparişler yüklenemedi");
+    return res.json();
+}
 
-export const fetchUserOrders = async (token) => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/orders`, authHeader(token));
-        const data = await handleResponse(response);
-        return data.data;
-    } catch (error) {
-        console.error('fetchUserOrders:', error);
-        throw error;
-    }
-};
+export async function createOrder(orderData) {
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(orderData),
+    });
+    if (!res.ok) throw new Error("Sipariş oluşturulamadı");
+    return res.json();
+}
