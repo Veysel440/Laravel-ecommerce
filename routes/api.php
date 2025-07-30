@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\AdminCampaignController;
+use App\Http\Controllers\Api\AdminShippingController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CartController;
@@ -37,4 +39,13 @@ Route::prefix('auth')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
     });
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::apiResource('admin/campaigns', AdminCampaignController::class);
+    Route::post('admin/campaigns/{id}/activate', [AdminCampaignController::class, 'activate']);
+    Route::post('admin/campaigns/{id}/deactivate', [AdminCampaignController::class, 'deactivate']);
+});
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::apiResource('admin/shipping', AdminShippingController::class);
 });

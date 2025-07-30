@@ -56,3 +56,76 @@ export async function fetchDashboardStats() {
     });
     return res.json();
 }
+export async function fetchAdminCampaigns() {
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/admin/campaigns", {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+}
+export async function createCampaign(data) {
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/admin/campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+    });
+    return res.json();
+}
+export async function updateCampaign(id, data) {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`/api/admin/campaigns/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+    });
+    return res.json();
+}
+export async function deleteCampaign(id) {
+    const token = localStorage.getItem("token");
+    await fetch(`/api/admin/campaigns/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export async function fetchShippingCompanies() {
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/admin/shipping", {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Kargo firmaları alınamadı");
+    return res.json();
+}
+
+export async function createShippingCompany(data) {
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/admin/shipping", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Kargo firması eklenemedi");
+    return res.json();
+}
+
+export async function updateShippingCompany(id, data) {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`/api/admin/shipping/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Kargo firması güncellenemedi");
+    return res.json();
+}
+
+export async function deleteShippingCompany(id) {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`/api/admin/shipping/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Kargo firması silinemedi");
+    return res.json();
+}
