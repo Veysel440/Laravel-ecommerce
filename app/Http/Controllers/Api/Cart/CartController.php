@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Cart;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\CartAddRequest;
-use App\Http\Requests\CartUpdateRequest;
+use App\Http\Requests\Cart\CartAddRequest;
+use App\Http\Requests\Cart\CartUpdateRequest;
 use App\Http\Resources\CartItemResource;
 use App\Services\Cart\CartServiceInterface;
-use App\Helpers\ApiResponse;
 use Illuminate\Http\Request;
 
 class CartController extends Controller

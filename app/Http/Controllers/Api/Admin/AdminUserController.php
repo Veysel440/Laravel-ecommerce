@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\UserTypeUpdateRequest;
-use App\Services\Admin\AdminUserServiceInterface;
 use App\Helpers\ApiResponse;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\User\UserTypeUpdateRequest;
+use App\Services\Admin\AdminUserServiceInterface;
 
 class AdminUserController extends Controller
 {

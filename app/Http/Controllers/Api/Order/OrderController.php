@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Order;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\OrderStoreRequest;
+use App\Http\Requests\Order\OrderStoreRequest;
 use App\Http\Resources\OrderResource;
 use App\Services\Order\OrderServiceInterface;
-use App\Helpers\ApiResponse;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller

@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\OrderStatusUpdateRequest;
+use App\Http\Requests\Order\OrderStatusUpdateRequest;
 use App\Http\Resources\OrderResource;
 use App\Services\Admin\AdminOrderServiceInterface;
-use App\Helpers\ApiResponse;
 
 class AdminOrderController extends Controller
 {

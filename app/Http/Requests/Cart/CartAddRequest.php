@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Cart;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class OrderStatusUpdateRequest extends FormRequest
+class CartAddRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -14,7 +14,8 @@ class OrderStatusUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => 'required|in:pending,completed,cancelled',
+            'product_id' => 'required|integer|exists:products,id',
+            'quantity'   => 'required|integer|min:1',
         ];
     }
 }
