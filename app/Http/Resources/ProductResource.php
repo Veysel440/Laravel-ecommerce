@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductResource extends JsonResource
@@ -10,14 +9,17 @@ class ProductResource extends JsonResource
     public function toArray($request): array
     {
         return [
-            'id' => $this->id,
-            'name' => $this->name,
+            'id'     => $this->id,
+            'slug'   => $this->slug,
+            'name'   => $this->name,
             'description' => $this->description,
-            'price' => $this->price,
-            'stock' => $this->stock,
-            'image' => $this->image,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'brand'  => $this->whenLoaded('brand', fn()=>[
+                'id'=>$this->brand->id,'name'=>$this->brand->name,'slug'=>$this->brand->slug
+            ]),
+            'images' => $this->whenLoaded('images', fn()=> $this->images->map->only(['id','path','sort'])),
+            'categories' => $this->whenLoaded('categories', fn()=> $this->categories->map->only(['id','name','slug'])),
+            'tax_rate' => (float)$this->tax_rate,
+            'skus'   => SkuResource::collection($this->whenLoaded('skus')),
         ];
     }
 }

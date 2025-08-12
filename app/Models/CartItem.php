@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class CartItem extends Model
-{
-    protected $fillable = ['user_id', 'product_id', 'quantity'];
+class CartItem extends Model {
+    protected $fillable=['cart_id','sku_id','qty','price_snapshot'];
+    protected $casts=['price_snapshot'=>'array'];
+    public function cart(){ return $this->belongsTo(Cart::class); }
+    public function sku(){ return $this->belongsTo(Sku::class); }
 }

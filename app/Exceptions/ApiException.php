@@ -1,20 +1,33 @@
 <?php
 
 namespace App\Exceptions;
+
 use Exception;
 
-class ApiException extends Exception
+abstract class ApiException extends Exception
 {
-    protected $statusCode;
+    public function __construct(string $message, public int $status=400, public array $meta=[])
+    { parent::__construct($message, $this->status); }
+}
 
-    public function __construct(string $message, int $statusCode = 500)
-    {
-        parent::__construct($message);
-        $this->statusCode = $statusCode;
-    }
+class InsufficientStockException extends ApiException
+{ public function __construct(array $meta=[])
 
-    public function getStatusCode(): int
-    {
-        return $this->statusCode;
-    }
+{
+    parent::__construct('insufficient_stock', 422, $meta); }
+}
+
+class CouponException extends ApiException
+{
+    public function __construct(string $reason, array $meta=[]) { parent::__construct($reason, 422, $meta); }
+}
+
+class PaymentFailedException extends ApiException
+{
+    public function __construct(string $reason='payment_failed', array $meta=[]) { parent::__construct($reason, 422, $meta); }
+}
+
+class DomainStateException extends ApiException
+{
+    public function __construct(string $reason='invalid_state', array $meta=[]) { parent::__construct($reason, 409, $meta); }
 }

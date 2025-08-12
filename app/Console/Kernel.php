@@ -7,15 +7,16 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
-    protected function schedule(Schedule $schedule)
+    protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('report:generate-sales')->dailyAt('23:59');
+        $schedule->command('carts:prune')->hourly();
+        $schedule->command('stock:recount')->everyTwoHours();
+        $schedule->command('reports:sales-snapshot')->dailyAt('23:55');
+        $schedule->command('audits:prune')->weeklyOn(1, '03:00');
     }
 
-    protected function commands()
+    protected function commands(): void
     {
         $this->load(__DIR__.'/Commands');
-
-        require base_path('routes/console.php');
     }
 }

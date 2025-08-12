@@ -2,57 +2,38 @@
 
 namespace App\Services\Order;
 
-use App\Repositories\Order\OrderRepositoryInterface;
-use Illuminate\Support\Facades\Log;
-use Exception;
+use App\Models\{Cart, Order, OrderItem};
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
-class OrderService implements OrderServiceInterface
-{
-    protected $orderRepository;
-
-    public function __construct(OrderRepositoryInterface $orderRepository)
-    {
-        $this->orderRepository = $orderRepository;
+class OrderService {
+    public function createFromCart(Cart $cart, array $billing, array $shipping): Order {
+        return DB::transaction(function() use($cart,$billing,$shipping){
+            $number = $this->generateNumber();
+            $order = Order::create([
+                'user_id'=>$cart->user_id,
+                'number'=>$number,
+                'status'=>'pending',
+                'currency'=>$cart->currency,
+                'totals'=>$cart->totals ?? [],
+                'billing_address'=>$billing,
+                'shipping_address'=>$shipping,
+            ]);
+            foreach ($cart->items()->with('sku')->get() as $it) {
+                OrderItem::create([
+                    'order_id'=>$order->id,
+                    'sku_id'=>$it->sku_id,
+                    'qty'=>$it->qty,
+                    'unit_price'=>$it->price_snapshot['unit'] ?? $it->sku->price,
+                    'tax'=>0,
+                    'total'=>($it->price_snapshot['unit'] ?? $it->sku->price) * $it->qty,
+                ]);
+            }
+            return $order->load('items');
+        });
     }
 
-    public function createOrder(int $userId, float $totalPrice, array $items)
-    {
-        try {
-            return $this->orderRepository->createOrder($userId, $totalPrice, $items);
-        } catch (\Throwable $e) {
-            Log::error('Sipariş oluşturulurken hata.', [
-                'user_id'     => $userId,
-                'total_price' => $totalPrice,
-                'items'       => $items,
-                'error'       => $e->getMessage(),
-            ]);
-            throw new Exception('Sipariş oluşturulamadı.');
-        }
-    }
-
-    public function getUserOrders(int $userId)
-    {
-        try {
-            return $this->orderRepository->getUserOrders($userId);
-        } catch (\Throwable $e) {
-            Log::error('Kullanıcının siparişleri getirilirken hata.', [
-                'user_id' => $userId,
-                'error'   => $e->getMessage(),
-            ]);
-            throw new Exception('Sipariş bilgisi alınamadı.');
-        }
-    }
-
-    public function getOrderById(int $id)
-    {
-        try {
-            return $this->orderRepository->getOrderById($id);
-        } catch (\Throwable $e) {
-            Log::error('Sipariş detayı getirilirken hata.', [
-                'order_id' => $id,
-                'error'    => $e->getMessage(),
-            ]);
-            throw new Exception('Sipariş detayları alınamadı.');
-        }
+    private function generateNumber(): string {
+        return 'ORD-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
     }
 }

@@ -2,84 +2,65 @@
 
 namespace App\Services\Cart;
 
-use App\Repositories\Cart\CartRepositoryInterface;
-use Illuminate\Support\Facades\Log;
-use Exception;
+use App\Models\{Cart, CartItem, Sku};
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
-class CartService implements CartServiceInterface
-{
-    protected $cartRepository;
+class CartService {
+    public function __construct(private TotalsService $totals) {}
 
-    public function __construct(CartRepositoryInterface $cartRepository)
-    {
-        $this->cartRepository = $cartRepository;
+    public function add(Cart $cart, int $skuId, int $qty): Cart {
+        return DB::transaction(function() use($cart,$skuId,$qty) {
+            /** @var Sku $sku */
+            $sku = Sku::with('inventory')->lockForUpdate()->findOrFail($skuId);
+            $this->assertStock($sku, $qty);
+
+            $item = $cart->items()->firstOrCreate(['sku_id'=>$sku->id], [
+                'qty'=>0,'price_snapshot'=>[
+                    'unit'=>$sku->price, 'currency'=>$sku->currency, 'tax'=>0, 'discount'=>0
+                ],
+            ]);
+            $item->qty += $qty;
+            $this->assertStock($sku, $item->qty);
+            $item->save();
+
+            $cart->refresh();
+            $cart->totals = $this->totals->recalculate($cart);
+            $cart->save();
+
+            return $cart->load('items.sku.inventory');
+        });
     }
 
-    public function getUserCart(int $userId)
-    {
-        try {
-            return $this->cartRepository->getUserCart($userId);
-        } catch (\Throwable $e) {
-            Log::error('Sepet getirilirken hata.', [
-                'user_id' => $userId,
-                'error'   => $e->getMessage(),
-            ]);
-            throw new Exception('Sepet bilgisi alınamadı.');
-        }
+    public function updateQty(Cart $cart, int $itemId, int $qty): Cart {
+        return DB::transaction(function() use($cart,$itemId,$qty) {
+            /** @var CartItem $item */
+            $item = $cart->items()->lockForUpdate()->findOrFail($itemId);
+            if ($qty === 0) { $item->delete(); }
+            else {
+                $sku = $item->sku()->with('inventory')->lockForUpdate()->first();
+                $this->assertStock($sku, $qty);
+                $item->qty = $qty; $item->save();
+            }
+            $cart->refresh();
+            $cart->totals = $this->totals->recalculate($cart);
+            $cart->save();
+            return $cart->load('items.sku.inventory');
+        });
     }
 
-    public function addToCart(int $userId, int $productId, int $quantity)
-    {
-        try {
-            return $this->cartRepository->addToCart($userId, $productId, $quantity);
-        } catch (\Throwable $e) {
-            Log::error('Sepete ürün eklenirken hata.', [
-                'user_id'    => $userId,
-                'product_id' => $productId,
-                'quantity'   => $quantity,
-                'error'      => $e->getMessage(),
-            ]);
-            throw new Exception('Ürün sepete eklenemedi.');
-        }
+    public function remove(Cart $cart, int $itemId): Cart {
+        $cart->items()->whereKey($itemId)->delete();
+        $cart->refresh();
+        $cart->totals = $this->totals->recalculate($cart);
+        $cart->save();
+        return $cart->load('items.sku.inventory');
     }
 
-    public function updateQuantity(int $cartItemId, int $quantity)
-    {
-        try {
-            return $this->cartRepository->updateQuantity($cartItemId, $quantity);
-        } catch (\Throwable $e) {
-            Log::error('Sepet ürün miktarı güncellenirken hata.', [
-                'cart_item_id' => $cartItemId,
-                'quantity'     => $quantity,
-                'error'        => $e->getMessage(),
-            ]);
-            throw new Exception('Sepet ürünü güncellenemedi.');
-        }
-    }
-
-    public function removeItem(int $cartItemId)
-    {
-        try {
-            return $this->cartRepository->removeItem($cartItemId);
-        } catch (\Throwable $e) {
-            Log::error('Sepet ürünü silinirken hata.', [
-                'cart_item_id' => $cartItemId,
-                'error'        => $e->getMessage(),
-            ]);
-            throw new Exception('Ürün sepetten silinemedi.');
-        }
-    }
-
-    public function clearCart(int $userId)
-    {
-        try {
-            return $this->cartRepository->clearCart($userId);
-        } catch (\Throwable $e) {
-            Log::error('Sepet temizlenirken hata.', [
-                'user_id' => $userId,
-                'error'   => $e->getMessage(),
-            ]);
-            throw new Exception('Sepet temizlenemedi.');
+    private function assertStock(\App\Models\Sku $sku, int $desiredQty): void {
+        $available = ($sku->inventory->qty ?? 0) - ($sku->inventory->reserved_qty ?? 0);
+        if ($desiredQty > $available) {
+            throw new \App\Exceptions\InsufficientStockException(['available'=>$available,'requested'=>$desiredQty,'sku'=>$sku->id]);
         }
     }
 }
