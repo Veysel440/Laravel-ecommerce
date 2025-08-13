@@ -17,7 +17,9 @@ class CartService {
 
             $item = $cart->items()->firstOrCreate(['sku_id'=>$sku->id], [
                 'qty'=>0,'price_snapshot'=>[
-                    'unit'=>$sku->price, 'currency'=>$sku->currency, 'tax'=>0, 'discount'=>0
+                    'unit_minor'=>$sku->price_minor,
+                    'currency'=>$sku->currency,
+                    'tax_minor'=>0,'discount_minor'=>0
                 ],
             ]);
             $item->qty += $qty;

@@ -17,9 +17,16 @@ class SkuController extends Controller {
     }
     public function update(\App\Models\Sku $sku, \App\Http\Requests\Admin\SkuUpdateRequest $r)
     {
-        $sku->update($r->validated());
-        if ($r->filled('inventory_qty')) { $inv = $sku->inventory()->firstOrCreate([]); $inv->qty = $r->inventory_qty; $inv->save(); }
-        return ['success'=>true,'data'=>$sku->load('inventory')];
+        $payload = $r->validated();
+        if (isset($payload['price'])) {
+            $payload['price_minor'] = \App\Support\Money::toMinor($payload['price'], $payload['currency'] ?? $sku->currency);
+            unset($payload['price']);
+        }
+        if (isset($payload['compare_at_price'])) {
+            $payload['compare_at_price_minor'] = \App\Support\Money::toMinor($payload['compare_at_price'], $payload['currency'] ?? $sku->currency);
+            unset($payload['compare_at_price']);
+        }
+        $sku->update($payload);
     }
     public function destroy(\App\Models\Sku $sku)
     {

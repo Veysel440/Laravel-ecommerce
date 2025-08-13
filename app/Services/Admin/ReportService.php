@@ -6,21 +6,18 @@ use Illuminate\Support\Facades\DB;
 
 class ReportService
 {
-    public function sales(string $from, string $to, string $granularity='day'): array
-    {
+    public function sales(string $from, string $to, string $granularity='day'): array {
         $dateExpr = match($granularity) {
             'month' => "DATE_FORMAT(o.created_at,'%Y-%m-01')",
             'week'  => "STR_TO_DATE(CONCAT(YEARWEEK(o.created_at,3),' Monday'), '%X%V %W')",
             default => "DATE(o.created_at)",
         };
-        $rows = DB::table('orders as o')
+        $rows = \DB::table('orders as o')
             ->join('order_items as oi','oi.order_id','=','o.id')
-            ->selectRaw("$dateExpr as bucket, COUNT(DISTINCT o.id) as orders, SUM(oi.total) as revenue, SUM(oi.qty) as units")
+            ->selectRaw("$dateExpr as bucket, COUNT(DISTINCT o.id) as orders, SUM(oi.total_minor)/100 as revenue, SUM(oi.qty) as units")
             ->whereBetween('o.created_at', [$from, $to])
             ->whereIn('o.status',['paid','shipped','completed'])
-            ->groupBy('bucket')
-            ->orderBy('bucket')
-            ->get();
+            ->groupBy('bucket')->orderBy('bucket')->get();
         return ['items'=>$rows];
     }
 

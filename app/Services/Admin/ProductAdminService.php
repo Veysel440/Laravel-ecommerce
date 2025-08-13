@@ -43,13 +43,13 @@ class ProductAdminService
                 $s = Sku::create([
                     'product_id'=>$p->id,
                     'code'=>$sku['code'],
-                    'price'=>$sku['price'],
-                    'compare_at_price'=>$sku['compare_at_price'] ?? null,
-                    'currency'=>$sku['currency'],
+                    'price_minor'=> \App\Support\Money::toMinor($sku['price'], $sku['currency'] ?? 'TRY'),
+                    'compare_at_price_minor'=> isset($sku['compare_at_price']) ? \App\Support\Money::toMinor($sku['compare_at_price'], $sku['currency'] ?? 'TRY') : null,
+                    'currency'=>$sku['currency'] ?? 'TRY',
                     'weight'=>$sku['weight'] ?? null,
                     'dimensions'=>$sku['dimensions'] ?? null,
                 ]);
-                // option_values map
+
                 $pivotIds = [];
                 foreach (($sku['option_values'] ?? []) as $optName=>$valName) {
                     if (isset($optMap[$optName][$valName])) $pivotIds[] = $optMap[$optName][$valName];

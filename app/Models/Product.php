@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model {
-    protected $fillable=['brand_id','name','slug','description','status','tax_rate','meta'];
-    protected $casts=['meta'=>'array','tax_rate'=>'decimal:2'];
+    protected $fillable=['brand_id','name','slug','description','status','tax_rate_bp','meta'];
+    protected $casts=['meta'=>'array','tax_rate_bp'=>'integer'];
     public function brand(){ return $this->belongsTo(Brand::class); }
     public function categories(){ return $this->belongsToMany(Category::class); }
     public function images(){ return $this->hasMany(ProductImage::class); }
