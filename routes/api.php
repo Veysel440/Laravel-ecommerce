@@ -1,14 +1,14 @@
 <?php
 
+
 use Illuminate\Support\Facades\Route;
 
-// patterns
 Route::pattern('id','[0-9]+');
 Route::pattern('sku','[0-9]+');
 Route::pattern('order','[0-9]+');
 Route::pattern('slug','[A-Za-z0-9\-]+');
 
-// public/auth
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CategoryController as PublicCategoryController;
 use App\Http\Controllers\Api\V1\ProductController  as PublicProductController;
@@ -16,8 +16,11 @@ use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CouponController   as PublicCouponController;
 use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\PublicReportController;
+use App\Http\Controllers\Api\V1\ReviewController;
 
-// admin
+use App\Http\Controllers\Api\V1\Account\AddressController as AccountAddressController;
+use App\Http\Controllers\Api\V1\Account\OrderController   as AccountOrderController;
+
 use App\Http\Controllers\Api\V1\Admin\BrandController        as AdminBrandController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController     as AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\ProductController      as AdminProductController;
@@ -28,15 +31,11 @@ use App\Http\Controllers\Api\V1\Admin\ReviewController       as AdminReviewContr
 use App\Http\Controllers\Api\V1\Admin\ReportController       as AdminReportController;
 use App\Http\Controllers\Api\V1\Admin\MediaController        as AdminMediaController;
 
-// webhooks
 use App\Http\Controllers\Webhooks\StripeWebhookController;
 use App\Http\Controllers\Webhooks\IyzicoWebhookController;
 
 Route::prefix('v1')->as('api.v1.')->group(function () {
-
-    Route::get('health', fn() => response()->json(['success'=>true,'data'=>[
-        'time'=>now()->toISOString(), 'version'=>app()->version(),
-    ]]));
+    Route::get('health', HealthController::class);
 
     // Auth
     Route::post('auth/register', [AuthController::class,'register'])->middleware('throttle:auth')->name('auth.register');
@@ -48,6 +47,20 @@ Route::prefix('v1')->as('api.v1.')->group(function () {
         Route::post('auth/logout', [AuthController::class,'logout'])->name('auth.logout');
         Route::get('auth/me',      [AuthController::class,'me'])->name('auth.me');
         Route::post('auth/email/verification-notification', [\App\Http\Controllers\Api\V1\EmailVerificationController::class,'send'])->middleware('throttle:auth');
+
+        // Account
+        Route::get('account/addresses',           [AccountAddressController::class,'index'])->name('account.addresses.index');
+        Route::post('account/addresses',          [AccountAddressController::class,'store'])->name('account.addresses.store');
+        Route::patch('account/addresses/{id}',    [AccountAddressController::class,'update'])->name('account.addresses.update');
+        Route::delete('account/addresses/{id}',   [AccountAddressController::class,'destroy'])->name('account.addresses.destroy');
+
+        Route::get('account/orders',              [AccountOrderController::class,'index'])->name('account.orders.index');
+        Route::get('account/orders/{order}',      [AccountOrderController::class,'show'])->name('account.orders.show');
+
+        // Reviews (user)
+        Route::post('reviews',                    [ReviewController::class,'store'])->middleware('throttle:reviews')->name('reviews.store');
+        Route::patch('reviews/{id}',              [ReviewController::class,'update'])->middleware('throttle:reviews')->name('reviews.update');
+        Route::delete('reviews/{id}',             [ReviewController::class,'destroy'])->middleware('throttle:reviews')->name('reviews.destroy');
     });
     Route::get('auth/verify-email/{id}/{hash}', [\App\Http\Controllers\Api\V1\EmailVerificationController::class,'verify'])
         ->middleware(['signed','throttle:auth'])->name('verification.verify');
@@ -78,30 +91,24 @@ Route::prefix('v1')->as('api.v1.')->group(function () {
 
     // Admin
     Route::prefix('admin')->middleware(['auth:sanctum','role:admin','throttle:admin'])->as('admin.')->group(function () {
-        // Media
         Route::post('media',   [AdminMediaController::class,'store'])->name('media.store');
         Route::delete('media', [AdminMediaController::class,'destroy'])->name('media.destroy');
 
-        // Catalog
         Route::apiResource('brands',     AdminBrandController::class)->except('show');
         Route::apiResource('categories', AdminCategoryController::class)->except('show');
         Route::apiResource('products',   AdminProductController::class);
-        Route::post('products/{id}/skus', [AdminSkuController::class,'store'])->name('products.skus.store');
+        Route::post('products/{product}/skus', [AdminSkuController::class,'store'])->name('products.skus.store');
         Route::patch('skus/{sku}',        [AdminSkuController::class,'update'])->name('skus.update');
         Route::delete('skus/{sku}',       [AdminSkuController::class,'destroy'])->name('skus.destroy');
 
-        // Coupons
         Route::apiResource('coupons', AdminCouponController::class)->except('show');
 
-        // Orders
         Route::get('orders',                 [AdminOrderController::class,'index'])->name('orders.index');
         Route::get('orders/{order}',         [AdminOrderController::class,'show'])->name('orders.show');
         Route::patch('orders/{order}/status',[AdminOrderController::class,'updateStatus'])->name('orders.status');
 
-        // Reviews moderation
         Route::patch('reviews/{id}/moderate', [AdminReviewController::class,'moderate'])->name('reviews.moderate');
 
-        // Reports
         Route::get('reports/sales',          [AdminReportController::class,'sales'])->name('reports.sales');
         Route::get('reports/top-products',   [AdminReportController::class,'topProducts'])->name('reports.top');
         Route::get('reports/stock-alerts',   [AdminReportController::class,'stockAlerts'])->name('reports.stock');
@@ -110,9 +117,8 @@ Route::prefix('v1')->as('api.v1.')->group(function () {
     });
 
     // Webhooks
-    Route::post('webhooks/stripe', [StripeWebhookController::class,'__invoke'])->middleware('whsig:stripe');
-    Route::post('webhooks/iyzico', [IyzicoWebhookController::class,'__invoke'])->middleware('whsig:iyzico');
+    Route::post('webhooks/stripe', [StripeWebhookController::class,'__invoke'])->middleware(['whsig:stripe','throttle:webhooks']);
+    Route::post('webhooks/iyzico', [IyzicoWebhookController::class,'__invoke'])->middleware(['whsig:iyzico','throttle:webhooks']);
 });
 
-// fallback
 Route::fallback(fn() => response()->json(['success'=>false,'error'=>'not_found'], 404));

@@ -31,6 +31,12 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\AttachCartSession::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             'throttle:api',
+            \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\ForceJsonResponse::class,
+            \App\Http\Middleware\AttachCartSession::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            'throttle:api',
+            \App\Http\Middleware\ETagResponse::class,
         ],
     ];
 

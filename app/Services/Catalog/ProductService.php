@@ -2,8 +2,6 @@
 
 namespace App\Services\Catalog;
 
-
-use App\Models\Product;
 use Illuminate\Support\Facades\Cache;
 class ProductService
 {
