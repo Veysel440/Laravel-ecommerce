@@ -1,6 +1,7 @@
 <?php
 
 
+use App\Http\Controllers\Api\V1\Admin\RefundController;
 use Illuminate\Support\Facades\Route;
 
 Route::pattern('id','[0-9]+');
@@ -93,6 +94,10 @@ Route::prefix('v1')->as('api.v1.')->group(function () {
     Route::prefix('admin')->middleware(['auth:sanctum','role:admin','throttle:admin'])->as('admin.')->group(function () {
         Route::post('media',   [AdminMediaController::class,'store'])->name('media.store');
         Route::delete('media', [AdminMediaController::class,'destroy'])->name('media.destroy');
+
+        Route::post('orders/{order}/refunds', [RefundController::class,'store'])
+            ->middleware(['idem:300'])
+            ->name('orders.refunds.store');
 
         Route::apiResource('brands',     AdminBrandController::class)->except('show');
         Route::apiResource('categories', AdminCategoryController::class)->except('show');
