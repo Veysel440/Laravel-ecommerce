@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\Api\V1\Admin\RefundController;
+use App\Http\Controllers\Api\V1\SearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::pattern('id','[0-9]+');
@@ -37,6 +38,14 @@ use App\Http\Controllers\Webhooks\IyzicoWebhookController;
 
 Route::prefix('v1')->as('api.v1.')->group(function () {
     Route::get('health', HealthController::class);
+
+    Route::get('search/products', [SearchController::class,'products'])
+        ->middleware('throttle:search')
+        ->name('search.products');
+
+    Route::get('checkout/shipping-options', [CheckoutController::class,'shippingOptions'])
+        ->middleware('throttle:api')
+        ->name('checkout.shipping_options');
 
     // Auth
     Route::post('auth/register', [AuthController::class,'register'])->middleware('throttle:auth')->name('auth.register');

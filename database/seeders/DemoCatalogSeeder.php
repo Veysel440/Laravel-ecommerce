@@ -6,6 +6,21 @@ use Illuminate\Database\Seeder;
 
 class DemoCatalogSeeder extends Seeder {
     public function run(): void {
+        \App\Models\Brand::factory(5)->create();
+        \App\Models\Category::factory(6)->create();
+
+        \App\Models\Product::factory(30)
+            ->has(\App\Models\Sku::factory()->count(2)
+                ->afterCreating(function($sku){
+                    \App\Models\Inventory::firstOrCreate(['sku_id'=>$sku->id], ['qty'=>fake()->numberBetween(5,50),'reserved_qty'=>0]);
+                })
+            )
+            ->create()
+            ->each(function($p){
+                $p->categories()->attach(\App\Models\Category::inRandomOrder()->limit(2)->pluck('id'));
+            });
+
+
         $brand = \App\Models\Brand::firstOrCreate(['slug'=>'acme'],['name'=>'ACME']);
         $cat = \App\Models\Category::firstOrCreate(['slug'=>'electronics'],['name'=>'Electronics','status'=>'active']);
         $p = \App\Models\Product::firstOrCreate(['slug'=>'acme-phone'],[

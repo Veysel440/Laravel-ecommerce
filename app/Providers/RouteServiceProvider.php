@@ -17,6 +17,7 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('webhooks', fn($r)=> [Limit::perMinute(120)->by($r->ip())]);
         RateLimiter::for('reviews', fn($r)=> [\Illuminate\Cache\RateLimiting\Limit::perMinute(10)->by($r->user()?->id ?: $r->ip())]);
         RateLimiter::for('refunds', fn($r)=> [Limit::perMinute(15)->by($r->user()?->id ?: $r->ip())]);
+        RateLimiter::for('search', fn($r)=> [Limit::perMinute(60)->by($r->ip())]);
     }
 }
 

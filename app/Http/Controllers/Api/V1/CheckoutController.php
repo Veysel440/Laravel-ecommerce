@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+
+
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Checkout\{CheckoutAddressRequest,CheckoutShippingRequest,PaymentIntentRequest,CheckoutConfirmRequest};
 use App\Services\Cart\CartResolver;
@@ -13,10 +15,15 @@ use App\Support\ApiResponse;
 use App\Events\{OrderCreated,PaymentSucceeded};
 use App\Exceptions\{ApiException, PaymentFailedException, DomainStateException};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log;use App\Http\Requests\Checkout\ShippingOptionsRequest;
+use App\Services\Shipping\ShippingService;
+use App\Support\TotalsPresenter;
+
 
 class CheckoutController extends Controller
 {
+
+
     public function __construct(
         private CartResolver $resolver,
         private InventoryService $inv,
@@ -38,6 +45,23 @@ class CheckoutController extends Controller
         $t['grand'] = ($t['subtotal'] ?? 0) + ($t['taxTotal'] ?? 0) + ($t['shipping'] ?? 0) - ($t['discount'] ?? 0);
         $cart->totals = $t; $cart->save();
         return ApiResponse::ok(['totals'=>$t]);
+    }
+
+    /**
+     * Get shipping options
+     * @group Checkout
+     * @queryParam country required Example: TR
+     */
+    public function shippingOptions(ShippingOptionsRequest $req, ShippingService $ship)
+    {
+        $cart = $this->resolver->resolve($req);
+        $t = $cart->totals ?? (new \App\Services\Cart\TotalsService())->recalculate($cart);
+        $opts = $ship->options(strtoupper($req->country), (int)($t['grand_minor'] ?? 0));
+        return \App\Support\ApiResponse::ok([
+            'currency'=>$t['currency'] ?? config('shipping.currency','TRY'),
+            'options'=> $opts,
+            'totals' => TotalsPresenter::toPublic($t),
+        ]);
     }
 
     public function paymentIntent(PaymentIntentRequest $req) {
