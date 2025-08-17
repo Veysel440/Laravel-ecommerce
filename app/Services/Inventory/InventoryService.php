@@ -2,42 +2,45 @@
 
 namespace App\Services\Inventory;
 
-use App\Models\{Cart, Sku};
+use App\Exceptions\DomainStateException;
+use App\Models\Cart;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;use App\Exceptions\DomainStateException;
 
-class InventoryService {
-    public function reserveFromCart(\App\Models\Cart $cart): void {
-        \DB::transaction(function() use($cart){
+class InventoryService
+{
+    public function reserveFromCart(Cart $cart): void
+    {
+        DB::transaction(function() use($cart){
             foreach ($cart->items()->with('sku.inventory')->lockForUpdate()->get() as $item) {
                 $inv = $item->sku->inventory;
                 $available = $inv->qty - $inv->reserved_qty;
-                if ($item->qty > $available) throw new DomainStateException('stock_changed', ['sku'=>$item->sku_id,'available'=>$available]);
+                if ($item->qty > $available) {
+                    throw new DomainStateException('stock_changed', ['sku'=>$item->sku_id,'available'=>$available]);
+                }
                 $inv->reserved_qty += $item->qty; $inv->save();
             }
-        });
+        }, 3);
     }
 
-    public function commitFromCart(Cart $cart): void {
+    public function releaseFromCart(Cart $cart): void
+    {
         DB::transaction(function() use($cart){
             foreach ($cart->items()->with('sku.inventory')->lockForUpdate()->get() as $item) {
                 $inv = $item->sku->inventory;
-                $inv->reserved_qty -= $item->qty;
-                $inv->qty -= $item->qty;
-                if ($inv->reserved_qty < 0 || $inv->qty < 0) throw new RuntimeException('Inventory negative');
-                $inv->save();
+                $inv->reserved_qty = max(0, $inv->reserved_qty - $item->qty); $inv->save();
             }
-        });
+        }, 3);
     }
 
-    public function releaseFromCart(Cart $cart): void {
+    public function commitFromCart(Cart $cart): void
+    {
         DB::transaction(function() use($cart){
             foreach ($cart->items()->with('sku.inventory')->lockForUpdate()->get() as $item) {
                 $inv = $item->sku->inventory;
-                $inv->reserved_qty -= $item->qty;
-                if ($inv->reserved_qty < 0) $inv->reserved_qty = 0;
+                $inv->qty = max(0, $inv->qty - $item->qty);
+                $inv->reserved_qty = max(0, $inv->reserved_qty - $item->qty);
                 $inv->save();
             }
-        });
+        }, 3);
     }
 }

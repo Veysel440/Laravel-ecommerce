@@ -3,44 +3,46 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Cart\AddCartItemRequest;
-use App\Http\Requests\Cart\UpdateCartItemRequest;
-use Illuminate\Http\Client\Request;
+use App\Http\Requests\Cart\{AddCartItemRequest,UpdateCartItemRequest};
+use App\Services\Cart\{CartResolver,CartService};
+use App\Support\ApiResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
-class CartController extends Controller {
-    public function __construct(private \App\Services\Cart\CartResolver $resolver,
-                                private \App\Services\Cart\CartService $cart) {}
+class CartController extends Controller
+{
+    public function __construct(private CartResolver $resolver, private CartService $service) {}
 
-    public function show(Request $req)
+    public function show(Request $r)
     {
-        $c = $this->resolver->resolve($req);
-        return response()->json(['success'=>true,'data'=>$c->load('items.sku.inventory')]);
-    }
-    public function add(\App\Http\Requests\Cart\AddCartItemRequest $req) {
-        try {
-            $cart = $this->resolver->resolve($req);
-            $c = $this->cart->add($cart, (int)$req->sku_id, (int)$req->qty);
-            return \App\Support\ApiResponse::ok($c);
-        } catch (\App\Exceptions\ApiException $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            \Log::error('cart.add.failed', ['e'=>$e]);
-            throw new \App\Exceptions\DomainStateException('cart_add_failed');
-        }
+        $cart = $this->resolver->resolve($r);
+        return ApiResponse::ok($this->service->present($cart));
     }
 
-    public function update(\App\Http\Requests\Cart\UpdateCartItemRequest $req, int $id) {
+    public function add(AddCartItemRequest $r)
+    {
         try {
-            $cart = $this->resolver->resolve($req);
-            $c = $this->cart->updateQty($cart, $id, (int)$req->qty);
-            return \App\Support\ApiResponse::ok($c);
+            $cart = $this->resolver->resolve($r);
+            $data = $this->service->add($cart, (int)$r->sku_id, (int)$r->qty);
+            return ApiResponse::ok($data);
         } catch (\App\Exceptions\ApiException $e) { throw $e; }
-        catch (\Throwable $e) { \Log::error('cart.update.failed',['e'=>$e]); throw new \App\Exceptions\DomainStateException('cart_update_failed'); }
+        catch (\Throwable $e) { Log::error('cart.add',['e'=>$e]); return ApiResponse::fail('cart_add_failed',422); }
     }
-    public function remove(Request $req, int $id)
+
+    public function update(UpdateCartItemRequest $r, int $id)
     {
-        $cart = $this->resolver->resolve($req);
-        $c = $this->cart->remove($cart, $id);
-        return response()->json(['success'=>true,'data'=>$c]);
+        try {
+            $cart = $this->resolver->resolve($r);
+            $data = $this->service->updateQty($cart, $id, (int)$r->qty);
+            return ApiResponse::ok($data);
+        } catch (\App\Exceptions\ApiException $e) { throw $e; }
+        catch (\Throwable $e) { Log::error('cart.update',['e'=>$e]); return ApiResponse::fail('cart_update_failed',422); }
+    }
+
+    public function remove(Request $r, int $id)
+    {
+        $cart = $this->resolver->resolve($r);
+        $data = $this->service->remove($cart, $id);
+        return ApiResponse::ok($data);
     }
 }
