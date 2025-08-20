@@ -7,6 +7,9 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
+    protected $commands = [
+        \App\Console\Commands\BootstrapAdmin::class,
+    ];
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('carts:prune')->hourly();
@@ -14,6 +17,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('reports:sales-snapshot')->dailyAt('23:55');
         $schedule->command('audits:prune')->weeklyOn(1, '03:00');
         $schedule->command('scout:import "App\Models\Product"')->daily();
+
     }
 
     protected function commands(): void
